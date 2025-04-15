@@ -1,0 +1,324 @@
+﻿@page
+@model Library.Pages.BooksModel
+@{
+    ViewData["Title"] = "Books";
+}
+
+<div class="container">
+    <h2>Library Books</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="get">
+                <div class="input-group">
+                    <input type="text" class="form-control" asp-for="SearchString" placeholder="Search by title or author">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="col-md-6 text-right">
+            @if (User.IsInRole("Administrator"))
+            {
+                <button type="button" class="btn btn-success" data-toggle="modal" data-target="#addBookModal">
+                    Add New Book
+                </button>
+            }
+        </div>
+    </div>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Genre</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in Model.Books)
+            {
+                <tr>
+                    <td>@book.Title</td>
+                    <td>@book.Author</td>
+                    <td>@book.Genre.Name</td>
+                    <td>
+                        @if (book.IsAvailable)
+                        {
+                            <span class="badge badge-success">Available</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-danger">Borrowed</span>
+                        }
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-info"
+                                data-toggle="modal"
+                                data-target="#detailsModal"
+                                data-id="@book.Id"
+                                data-title="@book.Title"
+                                data-author="@book.Author"
+                                data-genre="@book.Genre.Name"
+                                data-available="@book.IsAvailable">
+                            Details
+                        </button>
+
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            @if (book.IsAvailable)
+                            {
+                                <button type="button" class="btn btn-sm btn-primary"
+                                        data-toggle="modal"
+                                        data-target="#borrowModal"
+                                        data-id="@book.Id"
+                                        data-title="@book.Title">
+                                    Borrow
+                                </button>
+                            }
+
+                            @if (User.IsInRole("Administrator"))
+                            {
+                                <button type="button" class="btn btn-sm btn-warning"
+                                        data-toggle="modal"
+                                        data-target="#editBookModal"
+                                        data-id="@book.Id"
+                                        data-title="@book.Title"
+                                        data-author="@book.Author"
+                                        data-genre-id="@book.GenreId">
+                                    Edit
+                                </button>
+
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        data-toggle="modal"
+                                        data-target="#deleteBookModal"
+                                        data-id="@book.Id"
+                                        data-title="@book.Title">
+                                    Delete
+                                </button>
+                            }
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Book Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <dl class="row">
+                    <dt class="col-sm-3">Title:</dt>
+                    <dd class="col-sm-9" id="detail-title"></dd>
+
+                    <dt class="col-sm-3">Author:</dt>
+                    <dd class="col-sm-9" id="detail-author"></dd>
+
+                    <dt class="col-sm-3">Genre:</dt>
+                    <dd class="col-sm-9" id="detail-genre"></dd>
+
+                    <dt class="col-sm-3">Status:</dt>
+                    <dd class="col-sm-9" id="detail-status"></dd>
+                </dl>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <div class="modal fade" id="borrowModal" tabindex="-1" role="dialog" aria-labelledby="borrowModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="borrowModalLabel">Borrow Book</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" asp-page-handler="Borrow">
+                    <div class="modal-body">
+                        <input type="hidden" id="borrow-id" name="bookId" />
+                        <p>Are you sure you want to borrow: <strong id="borrow-title"></strong>?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Borrow</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (User.IsInRole("Administrator"))
+{
+    <div class="modal fade" id="addBookModal" tabindex="-1" role="dialog" aria-labelledby="addBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBookModalLabel">Add New Book</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" asp-page-handler="Create">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="add-title">Title</label>
+                            <input type="text" class="form-control" id="add-title" name="title" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="add-author">Author</label>
+                            <input type="text" class="form-control" id="add-author" name="author" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="add-genre">Genre</label>
+                            <select class="form-control" id="add-genre" name="genreId" required>
+                                <option value="">-- Select Genre --</option>
+                                @foreach (var genre in Model.Genres)
+                                {
+                                    <option value="@genre.Id">@genre.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Add Book</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editBookModal" tabindex="-1" role="dialog" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookModalLabel">Edit Book</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" asp-page-handler="Edit">
+                    <div class="modal-body">
+                        <input type="hidden" id="edit-id" name="id" />
+                        <div class="form-group">
+                            <label for="edit-title">Title</label>
+                            <input type="text" class="form-control" id="edit-title" name="title" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-author">Author</label>
+                            <input type="text" class="form-control" id="edit-author" name="author" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-genre">Genre</label>
+                            <select class="form-control" id="edit-genre" name="genreId" required>
+                                <option value="">-- Select Genre --</option>
+                                @foreach (var genre in Model.Genres)
+                                {
+                                    <option value="@genre.Id">@genre.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Update Book</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteBookModal" tabindex="-1" role="dialog" aria-labelledby="deleteBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteBookModalLabel">Delete Book</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form method="post" asp-page-handler="Delete">
+                    <div class="modal-body">
+                        <input type="hidden" id="delete-id" name="id" />
+                        <p>Are you sure you want to delete: <strong id="delete-title"></strong>?</p>
+                        <p class="text-danger">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            $('#detailsModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var title = button.data('title');
+                var author = button.data('author');
+                var genre = button.data('genre');
+                var available = button.data('available');
+
+                $('#detail-title').text(title);
+                $('#detail-author').text(author);
+                $('#detail-genre').text(genre);
+                $('#detail-status').text(available ? 'Available' : 'Borrowed');
+                $('#detail-status').removeClass('text-success text-danger');
+                $('#detail-status').addClass(available ? 'text-success' : 'text-danger');
+            });
+
+            $('#borrowModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var id = button.data('id');
+                var title = button.data('title');
+
+                $('#borrow-id').val(id);
+                $('#borrow-title').text(title);
+            });
+
+            $('#editBookModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var id = button.data('id');
+                var title = button.data('title');
+                var author = button.data('author');
+                var genreId = button.data('genre-id');
+
+                $('#edit-id').val(id);
+                $('#edit-title').val(title);
+                $('#edit-author').val(author);
+                $('#edit-genre').val(genreId);
+            });
+
+            $('#deleteBookModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget);
+                var id = button.data('id');
+                var title = button.data('title');
+
+                $('#delete-id').val(id);
+                $('#delete-title').text(title);
+            });
+        });
+    </script>
+}

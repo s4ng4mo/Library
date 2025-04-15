@@ -31,13 +31,25 @@ namespace Library
                 options.UseSqlServer(
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDatabaseDeveloperPageExceptionFilter();
+
             services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
-            services.AddRazorPages();
+
+            services.AddRazorPages(options =>
+            {
+                options.Conventions.AuthorizeFolder("/Admin", "RequireAdministratorRole");
+            });
+
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireAdministratorRole",
+                    policy => policy.RequireRole("Administrator"));
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IServiceProvider serviceProvider)
         {
             if (env.IsDevelopment())
             {
@@ -63,6 +75,47 @@ namespace Library
             {
                 endpoints.MapRazorPages();
             });
+
+            // Create roles and admin user
+            CreateRoles(serviceProvider).Wait();
+        }
+
+        private async Task CreateRoles(IServiceProvider serviceProvider)
+        {
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+
+            string[] roleNames = { "Administrator", "User" };
+
+            foreach (var roleName in roleNames)
+            {
+                var roleExists = await roleManager.RoleExistsAsync(roleName);
+                if (!roleExists)
+                {
+                    await roleManager.CreateAsync(new IdentityRole(roleName));
+                }
+            }
+
+            // Create admin user if it doesn't exist
+            var adminEmail = "admin@library.com";
+            var adminUser = await userManager.FindByEmailAsync(adminEmail);
+
+            if (adminUser == null)
+            {
+                var admin = new IdentityUser
+                {
+                    UserName = adminEmail,
+                    Email = adminEmail,
+                    EmailConfirmed = true
+                };
+
+                var result = await userManager.CreateAsync(admin, "Library123!");
+
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(admin, "Administrator");
+                }
+            }
         }
     }
 }

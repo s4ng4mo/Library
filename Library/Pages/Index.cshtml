@@ -1,10 +1,61 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Home";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Welcome to the Library</h1>
+    <p class="lead">Explore our book collection, borrow books, and keep track of your reading history.</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Browse Books</h5>
+                <p class="card-text">Explore our collection of books on various topics and genres.</p>
+                <a asp-page="/Books" class="btn btn-primary">Go to Books</a>
+            </div>
+        </div>
+    </div>
+
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Your Loans</h5>
+                    <p class="card-text">View your active loans and loan history.</p>
+                    <a asp-page="/Loans" class="btn btn-primary">View Loan History</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Login or Register</h5>
+                    <p class="card-text">Login to your account or register to be able to borrow books.</p>
+                    <a asp-area="Identity" asp-page="/Account/Login" class="btn btn-primary">Login</a>
+                    <a asp-area="Identity" asp-page="/Account/Register" class="btn btn-outline-primary">Register</a>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (User.IsInRole("Administrator"))
+    {
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Admin Functions</h5>
+                    <p class="card-text">Manage books and user loans with administrative privileges.</p>
+                    <a asp-page="/Books" class="btn btn-danger">Manage Books</a>
+                </div>
+            </div>
+        </div>
+    }
 </div>
