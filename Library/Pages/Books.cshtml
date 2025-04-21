@@ -13,8 +13,15 @@
                 <div class="input-group">
                     <input type="text" class="form-control" asp-for="SearchString" placeholder="Search by title or author">
                     <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">Search</button>
+	                    <button class="btn btn-primary" type="submit">Search</button>
                     </div>
+                    <select class="form-control" asp-for="GenreFilter">
+	                    <option value="">All Genres</option>
+	                    @foreach (var genre in Model.Genres)
+	                    {
+		                    <option value="@genre.Id">@genre.Name</option>
+	                    }
+                    </select>
                 </div>
             </form>
         </div>
@@ -46,14 +53,18 @@
                     <td>@book.Author</td>
                     <td>@book.Genre.Name</td>
                     <td>
-                        @if (book.IsAvailable)
-                        {
-                            <span class="badge badge-success">Available</span>
-                        }
-                        else
-                        {
-                            <span class="badge badge-danger">Borrowed</span>
-                        }
+	                    @if (book.IsAvailable)
+	                    {
+		                    <span class="badge badge-success">Available</span>
+	                    }
+	                    else
+	                    {
+		                    <span class="badge badge-danger" 
+		                          data-toggle="tooltip" 
+		                          title="Borrowed on: @book.Loans.OrderByDescending(l => l.LoanDate).FirstOrDefault()?.LoanDate.ToString("MMM dd, yyyy")">
+			                    Borrowed
+		                    </span>
+	                    }
                     </td>
                     <td>
                         <button type="button" class="btn btn-sm btn-info"
@@ -274,6 +285,8 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
             $('#detailsModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget);
                 var title = button.data('title');

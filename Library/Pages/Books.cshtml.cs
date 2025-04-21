@@ -28,16 +28,27 @@ namespace Library.Pages
         [BindProperty(SupportsGet = true)]
         public string SearchString { get; set; }
 
+        [BindProperty(SupportsGet = true)]
+        public int? GenreFilter { get; set; }
+
         public async Task OnGetAsync()
         {
             Genres = await _context.Genres.OrderBy(g => g.Name).ToListAsync();
 
-            var books = _context.Books.Include(b => b.Genre).AsQueryable();
+            var books = _context.Books
+                .Include(b => b.Genre)
+                .Include(b => b.Loans)
+                .AsQueryable();
 
             if (!string.IsNullOrEmpty(SearchString))
             {
                 books = books.Where(b => b.Title.Contains(SearchString) ||
-                                        b.Author.Contains(SearchString));
+                                         b.Author.Contains(SearchString));
+            }
+
+            if (GenreFilter.HasValue && GenreFilter > 0)
+            {
+                books = books.Where(b => b.GenreId == GenreFilter.Value);
             }
 
             Books = await books.ToListAsync();
