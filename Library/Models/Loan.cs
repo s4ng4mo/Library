@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
 
 namespace Library.Models
 {
@@ -22,6 +21,6 @@ namespace Library.Models
         public DateTime? ReturnDate { get; set; }
 
         public virtual Book Book { get; set; }
-        public virtual IdentityUser User { get; set; }
+        public virtual ApplicationUser User { get; set; }
     }
 }

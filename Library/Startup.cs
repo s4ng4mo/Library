@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Library.Models;
 
 namespace Library
 {
@@ -32,7 +33,11 @@ namespace Library
                     Configuration.GetConnectionString("DefaultConnection")));
             services.AddDatabaseDeveloperPageExceptionFilter();
 
-            services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            services.AddDefaultIdentity<ApplicationUser>(options =>
+                {
+                    options.SignIn.RequireConfirmedAccount = false;
+                    options.SignIn.RequireConfirmedEmail = false;
+                })
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -83,7 +88,7 @@ namespace Library
         private async Task CreateRoles(IServiceProvider serviceProvider)
         {
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            var userManager = serviceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
             string[] roleNames = { "Administrator", "User" };
 
@@ -97,19 +102,23 @@ namespace Library
             }
 
             // Create admin user if it doesn't exist
+            var adminFirst = "Admin";
+            var adminLast = "Admin";
             var adminEmail = "admin@library.com";
             var adminUser = await userManager.FindByEmailAsync(adminEmail);
 
             if (adminUser == null)
             {
-                var admin = new IdentityUser
+                var admin = new ApplicationUser
                 {
+                    FirstName = adminFirst,
+                    LastName = adminLast,
                     UserName = adminEmail,
                     Email = adminEmail,
                     EmailConfirmed = true
                 };
 
-                var result = await userManager.CreateAsync(admin, "Library123!");
+                var result = await userManager.CreateAsync(admin, "Admin123!");
 
                 if (result.Succeeded)
                 {

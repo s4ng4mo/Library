@@ -14,9 +14,9 @@ namespace Library.Pages
     public class LoansModel : PageModel
     {
         private readonly ApplicationDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public LoansModel(ApplicationDbContext context, UserManager<IdentityUser> userManager)
+        public LoansModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;
